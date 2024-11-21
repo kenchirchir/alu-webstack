@@ -13,7 +13,7 @@ global
         crt-base /etc/ssl/private
 
         # See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
-        ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA>
+        ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-S>
         ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
         ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
 
@@ -33,24 +33,19 @@ defaults
         errorfile 503 /etc/haproxy/errors/503.http
         errorfile 504 /etc/haproxy/errors/504.http
 
-frontend http_front
-    bind *:80
-    default_backend http_back
+frontend kenchirchir.tech-frontend
+        bind *:80
+        mode http
+        http-request redirect scheme https code 301 unless { ssl_fc }
+        http-request set-header X_Forwarded-Proto http
+        default_backend kenchirchir.tech-backend
 
-frontend https_front
-    bind *:443 ssl crt /etc/ssl/certs/combined.pem
-    option http-server-close
-    option forwardfor
-    acl is_homepage path /
-    use_backend web_backend if is_homepage
-    default_backend web_backend
+frontend kenchirchir.tech-frontend-https
+        bind *:443 ssl crt /etc/haproxy/certs/clickviral.tech.pem
+        http-request set-header X-Forwarded-Proto https
+        default_backend kenchirchir.tech-backend
 
-backend http_back
-    balance roundrobin
-    server web-01 54.205.1.165:80 check
-    server web-02 98.81.244.47:80 check
-
-backend web_backend
-    balance roundrobin
-    server web-01 54.205.1.165:80 check
-    server web-02 98.81.244.47:80 check
+backend kenchirchir.tech-backend
+        balance roundrobin
+        server 6314-web-01 18.212.251.59:80 check
+        server 6314-web-02 44.220.148.220:80 check
